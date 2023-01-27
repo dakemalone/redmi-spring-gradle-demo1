@@ -1,0 +1,12 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: hyn1
+#ftp server configuration
+ftp:
+  option:
+    ip: 192.168.206.177
+    port: 21
+    user: ftpuser
+    password: 123456
