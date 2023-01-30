@@ -11,10 +11,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 
 
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 
 @Configuration
 public class FTPUtil {
@@ -53,9 +54,9 @@ public class FTPUtil {
             ftpClient.setStrictReplyParsing(false);
             ftpClient.setBufferSize(BUFFER_SIZE);
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-            int reply = ftpClient.getReply();
-            System.out.println(reply);
-            if (!FTPReply.isProtectedReplyCode(reply)) {
+            int replyCode = ftpClient.getReplyCode();
+            System.out.println(replyCode);
+            if (!FTPReply.isProtectedReplyCode(replyCode)) {
                 closeConnection();
             }
         } catch (Exception e) {
@@ -150,21 +151,17 @@ public class FTPUtil {
         }
     }
 
-    public static void main(String[] args) throws IOException{
-        OptionFtp optionFtp = new OptionFtp();
-        optionFtp.setIp("192.168.206.177");
-        optionFtp.setPort("21");
-        optionFtp.setUser("ftpuser");
-        optionFtp.setPassword("123456");
-        ftpClient.setStrictReplyParsing(false);
-        ftpClient.setBufferSize(BUFFER_SIZE);
-        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-        ftpClient = new FTPClient();
-        ftpClient.connect(optionFtp.getIp(),Integer.valueOf(optionFtp.getPort()));
-        boolean isLogin = ftpClient.login(optionFtp.getUser(),optionFtp.getPassword());
-        ftpClient.setStrictReplyParsing(false);
-        ftpClient.setBufferSize(BUFFER_SIZE);
-        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-        System.out.println(isLogin);
+    public static void main(String[] args) throws IOException, URISyntaxException {
+        String str = "ftp://ftpuser:123456@192.168.31.248:21/hello";
+        URI uri = new URI(str);
+        URL url = new URL(str);
+
+        URLConnection connection = url.openConnection();
+        InputStream in = connection.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in,"utf-8"));
+
+//        File file = new File(uri+"/a.txt");
+//        System.out.println(file.isFile());
+//        System.out.println("ok");
     }
 }
