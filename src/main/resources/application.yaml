@@ -10,3 +10,4 @@ ftp:
     port: 21
     user: ftpuser
     password: 123456
+debug: true

@@ -1,20 +1,21 @@
 package com.example.demo.util;
 
+import cn.hutool.core.io.watch.WatchMonitor;
 import com.example.demo.pojo.OptionFtp;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 
-
-
-import java.io.FileOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 
 @Configuration
 public class FTPUtil {
@@ -53,10 +54,11 @@ public class FTPUtil {
             ftpClient.setStrictReplyParsing(false);
             ftpClient.setBufferSize(BUFFER_SIZE);
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-            int reply = ftpClient.getReply();
-            System.out.println(reply);
-            if (!FTPReply.isProtectedReplyCode(reply)) {
-                closeConnection();
+//            ftpClient.sendNoOp();
+
+            int replyCode = ftpClient.getReplyCode();
+            if (!FTPReply.isPositiveCompletion(replyCode)) {
+                System.out.println("ftp服务器登录成功");
             }
         } catch (Exception e) {
             log.error("",e);
@@ -117,11 +119,11 @@ public class FTPUtil {
      * @param optionFtp
      * @param filename
      * @param dirPath
-     * @param fos
      * @return
      */
 
-    public static void download(OptionFtp optionFtp, String filename, String dirPath, FileOutputStream fos){
+    public static HashMap download(OptionFtp optionFtp, String filename, String dirPath){
+        HashMap<String,String> map = new HashMap<>();
         /*登录*/
         connection(optionFtp);
         if(ftpClient != null){
@@ -130,24 +132,26 @@ public class FTPUtil {
                 changeAndMakeWorkingDir(path);
                 String[] fileNames = ftpClient.listNames();
                 if(fileNames == null || fileNames.length == 0){
-                    return;
+                    return null;
                 }
-                for (String fileName :
-                        fileNames) {
+                for (String fileName : fileNames) {
                     String ftpName = new String(fileName.getBytes(SERVER_CHARSET), LOCAL_CHARSET);
+                    System.out.println("ftpName:"+ftpName);
                     if(StringUtils.equals(ftpName,filename)){
+                        // TODO: 30/1/2023 文件非空判断
+                        System.out.println("fileName:"+fileName);
                         InputStream in = ftpClient.retrieveFileStream(fileName);
-                        IOUtils.copy(in,fos);
+                        map = SourceFileReader.PathIterator(in);
+//                        IOUtils.copy(in,fos);
                     }
                 }
-
             } catch (IOException e){
                 log.error("",e);
             }finally {
-                closeConnection();
+//                closeConnection();
             }
-
         }
+        return map;
     }
 
     public static void main(String[] args) throws IOException{
@@ -156,15 +160,7 @@ public class FTPUtil {
         optionFtp.setPort("21");
         optionFtp.setUser("ftpuser");
         optionFtp.setPassword("123456");
-        ftpClient.setStrictReplyParsing(false);
-        ftpClient.setBufferSize(BUFFER_SIZE);
-        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-        ftpClient = new FTPClient();
-        ftpClient.connect(optionFtp.getIp(),Integer.valueOf(optionFtp.getPort()));
-        boolean isLogin = ftpClient.login(optionFtp.getUser(),optionFtp.getPassword());
-        ftpClient.setStrictReplyParsing(false);
-        ftpClient.setBufferSize(BUFFER_SIZE);
-        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-        System.out.println(isLogin);
+//        FTPUtil.connection(optionFtp);
+        FTPUtil.download(optionFtp,"P000S001003528031B001627.bzmd","/lily");
     }
 }
