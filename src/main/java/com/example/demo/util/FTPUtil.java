@@ -12,19 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 
-<<<<<<< HEAD
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.*;
 import java.util.HashMap;
-=======
 
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
->>>>>>> origin/main
 
 @Configuration
 public class FTPUtil {
@@ -54,45 +47,45 @@ public class FTPUtil {
     /**
      * 连接ftp服务器
      * */
-    private static void connection(OptionFtp optionFtp){
+    private static void connection(OptionFtp optionFtp) {
         ftpClient = new FTPClient();
         try {
-            ftpClient.connect(optionFtp.getIp(),Integer.valueOf(optionFtp.getPort()));
-            boolean isLogin = ftpClient.login(optionFtp.getUser(),optionFtp.getPassword());
+            ftpClient.connect(optionFtp.getIp(), Integer.valueOf(optionFtp.getPort()));
+            boolean isLogin = ftpClient.login(optionFtp.getUser(), optionFtp.getPassword());
             System.out.println(isLogin);
             ftpClient.setStrictReplyParsing(false);
             ftpClient.setBufferSize(BUFFER_SIZE);
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-<<<<<<< HEAD
+
 //            ftpClient.sendNoOp();
 
             int replyCode = ftpClient.getReplyCode();
             if (!FTPReply.isPositiveCompletion(replyCode)) {
                 System.out.println("ftp服务器登录成功");
-=======
-            int replyCode = ftpClient.getReplyCode();
-            System.out.println(replyCode);
-            if (!FTPReply.isProtectedReplyCode(replyCode)) {
-                closeConnection();
->>>>>>> origin/main
+
+                if (!FTPReply.isProtectedReplyCode(replyCode)) {
+                    closeConnection();
+
+                }
             }
-        } catch (Exception e) {
-            log.error("",e);
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    /**
+        /**
      * 关闭ftp client*/
-    private static void closeConnection() {
-        if (ftpClient != null && ftpClient.isConnected()) {
-            try {
-                ftpClient.logout();
-                ftpClient.disconnect();
-            } catch (IOException e){
-                log.error("",e);
+        private static void closeConnection() {
+            if (ftpClient != null && ftpClient.isConnected()) {
+                try {
+                    ftpClient.logout();
+                    ftpClient.disconnect();
+                } catch (IOException e){
+                    log.error("",e);
+                }
             }
         }
-    }
     private static String changeEncoding(String ftpPath){
         String directory = null;
         try{
@@ -170,7 +163,6 @@ public class FTPUtil {
         return map;
     }
 
-<<<<<<< HEAD
     public static void main(String[] args) throws IOException{
         OptionFtp optionFtp = new OptionFtp();
         optionFtp.setIp("192.168.206.177");
@@ -179,19 +171,6 @@ public class FTPUtil {
         optionFtp.setPassword("123456");
 //        FTPUtil.connection(optionFtp);
         FTPUtil.download(optionFtp,"P000S001003528031B001627.bzmd","/lily");
-=======
-    public static void main(String[] args) throws IOException, URISyntaxException {
-        String str = "ftp://ftpuser:123456@192.168.31.248:21/hello";
-        URI uri = new URI(str);
-        URL url = new URL(str);
 
-        URLConnection connection = url.openConnection();
-        InputStream in = connection.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in,"utf-8"));
-
-//        File file = new File(uri+"/a.txt");
-//        System.out.println(file.isFile());
-//        System.out.println("ok");
->>>>>>> origin/main
     }
 }

@@ -1,5 +1,6 @@
 server:
   port: 8080
+  address: 192.168.206.178
 spring:
   application:
     name: hyn1
