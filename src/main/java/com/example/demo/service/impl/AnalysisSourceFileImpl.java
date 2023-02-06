@@ -6,6 +6,7 @@ import com.example.demo.util.FTPUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 
 /**
  * @author dake malone
@@ -14,9 +15,9 @@ import java.util.HashMap;
 @Service
 public class AnalysisSourceFileImpl implements AnalysisSourceFile {
     @Override
-    public HashMap<String, String> get() {
+    public LinkedList get() {
         OptionFtp optionFtp = new OptionFtp();
-        optionFtp.setIp("192.168.206.177");
+        optionFtp.setIp("172.20.10.13");
         optionFtp.setPort("21");
         optionFtp.setUser("ftpuser");
         optionFtp.setPassword("123456");

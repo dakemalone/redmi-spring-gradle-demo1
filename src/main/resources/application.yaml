@@ -1,9 +1,14 @@
 server:
   port: 8080
-  address: 192.168.206.178
+  address: 172.20.10.2
 spring:
   application:
     name: hyn1
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: dake
+    url: jdbc:mysql://localhost:3306/mysql?characterEncoding=utf-8
 #ftp server configuration
 ftp:
   option:

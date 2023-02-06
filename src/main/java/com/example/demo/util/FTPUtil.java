@@ -2,6 +2,7 @@ package com.example.demo.util;
 
 import cn.hutool.core.io.watch.WatchMonitor;
 import com.example.demo.pojo.OptionFtp;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -18,7 +19,7 @@ import java.net.*;
 import java.util.HashMap;
 
 import java.io.*;
-
+import java.util.LinkedList;
 @Configuration
 public class FTPUtil {
     private static final Logger log= LoggerFactory.getLogger(FTPUtil.class);
@@ -52,7 +53,7 @@ public class FTPUtil {
         try {
             ftpClient.connect(optionFtp.getIp(), Integer.valueOf(optionFtp.getPort()));
             boolean isLogin = ftpClient.login(optionFtp.getUser(), optionFtp.getPassword());
-            System.out.println(isLogin);
+            log.info("",isLogin);
             ftpClient.setStrictReplyParsing(false);
             ftpClient.setBufferSize(BUFFER_SIZE);
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
@@ -60,12 +61,11 @@ public class FTPUtil {
 //            ftpClient.sendNoOp();
 
             int replyCode = ftpClient.getReplyCode();
+            log.info("",replyCode);
             if (!FTPReply.isPositiveCompletion(replyCode)) {
-                System.out.println("ftp服务器登录成功");
-
+                log.info("服务器登录成功");
                 if (!FTPReply.isProtectedReplyCode(replyCode)) {
                     closeConnection();
-
                 }
             }
         } catch (SocketException e) {
@@ -131,8 +131,8 @@ public class FTPUtil {
      * @return
      */
 
-    public static HashMap download(OptionFtp optionFtp, String filename, String dirPath){
-        HashMap<String,String> map = new HashMap<>();
+    public static LinkedList download(OptionFtp optionFtp, String filename, String dirPath){
+        LinkedList list = new LinkedList<>();
         /*登录*/
         connection(optionFtp);
         if(ftpClient != null){
@@ -150,7 +150,7 @@ public class FTPUtil {
                         // TODO: 30/1/2023 文件非空判断
                         System.out.println("fileName:"+fileName);
                         InputStream in = ftpClient.retrieveFileStream(fileName);
-                        map = SourceFileReader.PathIterator(in);
+                        list = SourceFileReader.PathIterator(in);
 //                        IOUtils.copy(in,fos);
                     }
                 }
@@ -160,12 +160,12 @@ public class FTPUtil {
 //                closeConnection();
             }
         }
-        return map;
+        return list;
     }
 
     public static void main(String[] args) throws IOException{
         OptionFtp optionFtp = new OptionFtp();
-        optionFtp.setIp("192.168.206.177");
+        optionFtp.setIp("172.20.10.13");
         optionFtp.setPort("21");
         optionFtp.setUser("ftpuser");
         optionFtp.setPassword("123456");
