@@ -1,14 +1,10 @@
 package com.example.demo.util;
 
-import cn.hutool.core.io.watch.WatchMonitor;
 import com.example.demo.pojo.OptionFtp;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +12,6 @@ import org.springframework.context.annotation.Configuration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
-import java.util.HashMap;
-
-import java.io.*;
-import java.util.LinkedList;
 @Configuration
 public class FTPUtil {
     private static final Logger log= LoggerFactory.getLogger(FTPUtil.class);
@@ -131,8 +123,8 @@ public class FTPUtil {
      * @return
      */
 
-    public static LinkedList download(OptionFtp optionFtp, String filename, String dirPath){
-        LinkedList list = new LinkedList<>();
+    public static InputStream download(OptionFtp optionFtp, String filename, String dirPath){
+        InputStream in = null;
         /*登录*/
         connection(optionFtp);
         if(ftpClient != null){
@@ -145,22 +137,39 @@ public class FTPUtil {
                 }
                 for (String fileName : fileNames) {
                     String ftpName = new String(fileName.getBytes(SERVER_CHARSET), LOCAL_CHARSET);
-                    System.out.println("ftpName:"+ftpName);
+
                     if(StringUtils.equals(ftpName,filename)){
                         // TODO: 30/1/2023 文件非空判断
                         System.out.println("fileName:"+fileName);
-                        InputStream in = ftpClient.retrieveFileStream(fileName);
-                        list = SourceFileReader.PathIterator(in);
-//                        IOUtils.copy(in,fos);
+                        in = ftpClient.retrieveFileStream(fileName);
                     }
                 }
             } catch (IOException e){
                 log.error("",e);
-            }finally {
-//                closeConnection();
+            } finally {
+                closeConnection();
             }
         }
-        return list;
+        return in;
+
+    }
+    public InputStream getImage(OptionFtp optionFtp,String filename,String workPath) throws IOException {
+        InputStream inputStream = null;
+        FTPUtil.connection(optionFtp);
+        ftpClient.setControlEncoding("UTF-8");
+        ftpClient.enterLocalPassiveMode();
+        if (ftpClient != null) {
+            try {
+                ftpClient.changeWorkingDirectory(workPath);
+                inputStream = ftpClient.retrieveFileStream(filename);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                inputStream.close();
+                FTPUtil.closeConnection();
+            }
+        }
+        return inputStream;
     }
 
     public static void main(String[] args) throws IOException{

@@ -17,3 +17,7 @@ ftp:
     user: ftpuser
     password: 123456
 debug: true
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true

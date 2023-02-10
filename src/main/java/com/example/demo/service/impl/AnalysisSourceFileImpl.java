@@ -3,8 +3,12 @@ package com.example.demo.service.impl;
 import com.example.demo.pojo.OptionFtp;
 import com.example.demo.service.AnalysisSourceFile;
 import com.example.demo.util.FTPUtil;
+import com.example.demo.util.SourceFileReader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -14,14 +18,17 @@ import java.util.LinkedList;
  */
 @Service
 public class AnalysisSourceFileImpl implements AnalysisSourceFile {
-    @Override
-    public LinkedList get() {
-        OptionFtp optionFtp = new OptionFtp();
-        optionFtp.setIp("172.20.10.13");
-        optionFtp.setPort("21");
-        optionFtp.setUser("ftpuser");
-        optionFtp.setPassword("123456");
-        return FTPUtil.download(optionFtp,"P000S001003528031B001627.bzmd","/lily");
+    private OptionFtp optionFtp;
+    public AnalysisSourceFileImpl (@Autowired OptionFtp optionFtp){
+        this.optionFtp = optionFtp;
+    }
 
+    @Override
+    public ArrayList get() {
+
+        ArrayList list = null;
+        InputStream in = FTPUtil.download(optionFtp,"P000S001003528031B001627.bzmd","/lily");
+        list = SourceFileReader.PathIterator(in);
+        return list;
     }
 }
