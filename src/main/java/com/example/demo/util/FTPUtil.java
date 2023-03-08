@@ -1,18 +1,27 @@
 package com.example.demo.util;
 
+import com.example.demo.Result.Result;
 import com.example.demo.pojo.OptionFtp;
+import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+
 @Configuration
+@Data
 public class FTPUtil {
     private static final Logger log= LoggerFactory.getLogger(FTPUtil.class);
     /**设置缓冲区大小
@@ -37,48 +46,65 @@ public class FTPUtil {
 
     private static FTPClient ftpClient = null;
 
+    @Autowired
+    private OptionFtp optionFtp;
+
     /**
      * 连接ftp服务器
      * */
-    private static void connection(OptionFtp optionFtp) {
+    private Result connection() {
         ftpClient = new FTPClient();
+        System.out.println(optionFtp.toString());
         try {
-            ftpClient.connect(optionFtp.getIp(), Integer.valueOf(optionFtp.getPort()));
-            boolean isLogin = ftpClient.login(optionFtp.getUser(), optionFtp.getPassword());
-            log.info("",isLogin);
-            ftpClient.setStrictReplyParsing(false);
-            ftpClient.setBufferSize(BUFFER_SIZE);
-            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-
-//            ftpClient.sendNoOp();
-
+            ftpClient.connect(optionFtp.getIp(),Integer.valueOf(optionFtp.getPort()));
+            boolean isLogin = ftpClient.login(optionFtp.getUser(),optionFtp.getPassword());
+            if (isLogin) {
+                log.info("FTP登录{}",isLogin? "成功":"失败");
+                ftpClient.setStrictReplyParsing(false);
+                ftpClient.setBufferSize(BUFFER_SIZE);
+                ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+            } else {
+                log.info("FTP登录{}",isLogin? "成功":"失败");
+            }
             int replyCode = ftpClient.getReplyCode();
             log.info("",replyCode);
             if (!FTPReply.isPositiveCompletion(replyCode)) {
-                log.info("服务器登录成功");
-                if (!FTPReply.isProtectedReplyCode(replyCode)) {
-                    closeConnection();
-                }
+                log.info("服务器通讯正常{}",replyCode);
+                return new Result<>(replyCode,"服务器通讯正常",null);
+            }
+            if (!FTPReply.isProtectedReplyCode(replyCode)) {
+                log.error("ftp server communication exception{}",replyCode);
+                closeConnection();
+                return new Result<>(replyCode,"ftp server communication exception",null);
             }
         } catch (SocketException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return new Result<>(0,"",null);
     }
-        /**
-     * 关闭ftp client*/
-        private static void closeConnection() {
+
+    /**
+     * 关闭ftp服务器
+     */
+    private void closeConnection() {
             if (ftpClient != null && ftpClient.isConnected()) {
                 try {
                     ftpClient.logout();
                     ftpClient.disconnect();
                 } catch (IOException e){
-                    log.error("",e);
+                    log.error("发生错误{}",e);
                 }
             }
-        }
-    private static String changeEncoding(String ftpPath){
+    }
+
+    /**
+     *
+     * @param ftpPath
+     * @return
+     */
+    private String changeEncoding(String ftpPath){
         String directory = null;
         try{
             if(FTPReply.isPositiveCompletion(ftpClient.sendCommand(OPTS_UTF8,"NO"))){
@@ -95,7 +121,7 @@ public class FTPUtil {
      * 如果没有，则创建工作目录
      * @param path
      */
-    private static void changeAndMakeWorkingDir(String path) {
+    private void changeAndMakeWorkingDir(String path) {
         try {
             ftpClient.changeWorkingDirectory("/");
             path = path.replaceAll("\\\\","/");
@@ -117,16 +143,15 @@ public class FTPUtil {
      * @author dake malone
      * @date 26/1/2023 下午 4:04
      * @param
-     * @param optionFtp
      * @param filename
      * @param dirPath
      * @return
      */
 
-    public static InputStream download(OptionFtp optionFtp, String filename, String dirPath){
+    public InputStream download(String filename, String dirPath){
         InputStream in = null;
         /*登录*/
-        connection(optionFtp);
+        connection();
         if(ftpClient != null){
             try{
                 String path = changeEncoding(dirPath);
@@ -155,7 +180,7 @@ public class FTPUtil {
     }
     public InputStream getImage(OptionFtp optionFtp,String filename,String workPath) throws IOException {
         InputStream inputStream = null;
-        FTPUtil.connection(optionFtp);
+        connection();
         ftpClient.setControlEncoding("UTF-8");
         ftpClient.enterLocalPassiveMode();
         if (ftpClient != null) {
@@ -166,20 +191,9 @@ public class FTPUtil {
                 throw new RuntimeException(e);
             } finally {
                 inputStream.close();
-                FTPUtil.closeConnection();
+                closeConnection();
             }
         }
         return inputStream;
-    }
-
-    public static void main(String[] args) throws IOException{
-        OptionFtp optionFtp = new OptionFtp();
-        optionFtp.setIp("172.20.10.13");
-        optionFtp.setPort("21");
-        optionFtp.setUser("ftpuser");
-        optionFtp.setPassword("123456");
-//        FTPUtil.connection(optionFtp);
-        FTPUtil.download(optionFtp,"P000S001003528031B001627.bzmd","/lily");
-
     }
 }
